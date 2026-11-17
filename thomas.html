@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thomas 小火車：星期大冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-frame {
+            0%, 100% { transform: scale(1); border-color: #38bdf8; }
+            50% { transform: scale(1.05); border-color: #f43f5e; }
+        .animate-pulse-frame {
+            animation: pulse-frame 1s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-x-hidden">
+
+    <!-- Header Banner -->
+    <header class="w-full max-w-4xl bg-gradient-to-r from-sky-500 via-indigo-600 to-blue-700 rounded-3xl shadow-xl p-4 md:p-6 mb-4 flex flex-col md:flex-row items-center justify-between border-4 border-white text-white relative">
+        <div class="absolute top-2 right-4 flex items-center space-x-2 bg-black/20 px-3 py-1 rounded-full text-xs font-bold">
+            <span id="audio-status-text">聲音關閉</span>
+            <button onclick="toggleAudio()" id="audio-toggle-btn" class="bg-white text-sky-700 px-3 py-1 rounded-full shadow hover:bg-sky-50 transition font-black">
+                <i class="fa-solid fa-volume-xmark mr-1"></i> 開啟火車音效
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-4 mb-3 md:mb-0">
+            <div class="bg-amber-300 text-slate-900 rounded-2xl w-16 h-16 flex items-center justify-center text-4xl shadow-lg border-2 border-white animate-bounce-slow">
+                🚂
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-wide drop-shadow-md">Thomas 小火車：星期大冒險</h1>
+                <p class="text-sm md:text-base text-sky-100 font-bold">幼兒/低年級趣味星期順序學習</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="bg-white/90 text-amber-800 border-2 border-amber-300 px-4 py-2 rounded-2xl flex items-center space-x-2 shadow-md">
+                <i class="fa-solid fa-star text-amber-500 text-xl"></i>
+                <span class="text-xl font-black" id="score-val">0</span>
+            </div>
+            <button onclick="goHome()" class="bg-white/90 hover:bg-white text-slate-700 font-bold px-4 py-2 rounded-2xl shadow transition">
+                <i class="fa-solid fa-house mr-1"></i> 主頁
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-6 md:p-10 flex-grow flex flex-col items-center justify-center border-4 border-sky-200 relative">
+
+        <!-- HOME SCREEN -->
+        <div id="screen-home" class="w-full text-center py-6 flex flex-col items-center">
+            <div class="mb-4 animate-bounce-slow">
+                <span class="text-8xl">🛤️🚂🚃</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-black text-slate-800 mb-3">快來幫 Thomas 找出消失的星期車廂！</h2>
+            <p class="text-slate-600 text-lg md:text-xl mb-8 max-w-lg font-bold">清晰車廂順序、大字體、三選一趣味點選！</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-xl">
+                <button onclick="startGame()" class="bg-gradient-to-br from-sky-400 to-blue-600 hover:from-sky-500 hover:to-blue-700 text-white p-6 rounded-3xl shadow-xl transform transition hover:-translate-y-1 flex flex-col items-center border-b-8 border-blue-800">
+                    <i class="fa-solid fa-train text-5xl mb-3"></i>
+                    <span class="text-2xl font-black mb-1">開始火車冒險</span>
+                    <span class="text-sky-100 text-sm font-bold">三選一趣味挑戰</span>
+                </button>
+
+                <button onclick="openErrorBank()" class="bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white p-6 rounded-3xl shadow-xl transform transition hover:-translate-y-1 flex flex-col items-center border-b-8 border-orange-800">
+                    <i class="fa-solid fa-book-open text-5xl mb-3"></i>
+                    <span class="text-2xl font-black mb-1">錯題溫習庫</span>
+                    <span class="text-amber-100 text-sm font-bold" id="error-count-badge">0 題錯題記錄</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- GAMEPLAY SCREEN -->
+        <div id="screen-game" class="w-full hidden flex flex-col items-center">
+            <div class="w-full flex justify-between items-center mb-6">
+                <span id="game-progress" class="bg-sky-100 text-sky-800 font-black px-4 py-2 rounded-2xl text-lg">題目 1 / 5</span>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500 font-bold">錯誤次數：</span>
+                    <span id="error-count-display" class="bg-amber-100 text-amber-800 font-black px-3 py-1 rounded-xl text-lg">0 / 3</span>
+                </div>
+            </div>
+
+            <!-- Sequence Display Box (Requirement: 星期一 -> 星期二 -> [ ❓ 畫框 ]) -->
+            <div class="bg-sky-50 border-4 border-sky-300 rounded-3xl p-6 md:p-8 w-full max-w-3xl text-center mb-8 shadow-md flex flex-wrap items-center justify-center gap-4">
+                <div class="text-2xl md:text-3xl font-black text-slate-700" id="seq-item-1">星期一</div>
+                <div class="text-2xl text-sky-500 font-black">➔</div>
+                <div class="text-2xl md:text-3xl font-black text-slate-700" id="seq-item-2">星期二</div>
+                <div class="text-2xl text-sky-500 font-black">➔</div>
+                <!-- Drawing Frame -->
+                <div class="bg-white border-4 border-rose-500 rounded-2xl px-6 py-4 shadow-inner flex items-center justify-center animate-pulse-frame min-w-[140px]">
+                    <span class="text-3xl md:text-4xl font-black text-rose-600" id="seq-target">[ ❓ 畫框 ]</span>
+                </div>
+            </div>
+
+            <!-- 3-Error Calendar Hint Box -->
+            <div id="hint-box" class="hidden bg-amber-100 border-4 border-amber-400 rounded-3xl p-6 w-full max-w-3xl mb-6 shadow-lg flex items-center space-x-4 animate-bounce-slow">
+                <div class="text-5xl">📅</div>
+                <div>
+                    <h4 class="text-xl font-black text-amber-900 mb-1">日曆小幫手提示：</h4>
+                    <p id="hint-text" class="text-amber-800 text-lg font-bold">一星期順序：星期一 ➡️ 星期二 ➡️ 星期三...</p>
+                </div>
+            </div>
+
+            <!-- 3 Choice Options -->
+            <div id="options-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- ERROR BANK SCREEN -->
+        <div id="screen-error-bank" class="w-full hidden flex flex-col items-center">
+            <div class="flex items-center justify-between w-full mb-6">
+                <h2 class="text-2xl md:text-3xl font-black text-slate-800"><i class="fa-solid fa-book-bookmark text-amber-500 mr-2"></i> 錯題溫習庫</h2>
+                <button onclick="goHome()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl">返回主頁</button>
+            </div>
+            <div id="error-list-container" class="w-full space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- MODAL OVERLAY -->
+        <div id="modal-overlay" class="absolute inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-amber-300">
+                <div id="modal-icon" class="text-7xl mb-4">🌟</div>
+                <h3 id="modal-title" class="text-3xl font-black text-slate-800 mb-2">太棒了！</h3>
+                <p id="modal-text" class="text-slate-600 text-lg font-bold mb-6">火車順利前進！</p>
+                <button id="modal-btn" onclick="nextQuestion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xl py-4 rounded-2xl shadow-xl transition">
+                    下一題 <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-4 text-center text-slate-600 font-bold text-sm">
+        Thomas 小火車星期順序學習網頁
+    </footer>
+
+    <!-- Script Engine -->
+    <script>
+        // --- Web Audio API & Sound Effects ---
+        let audioCtx = null;
+        let isAudioOn = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudio() {
+            initAudio();
+            isAudioOn = !isAudioOn;
+            const btn = document.getElementById('audio-toggle-btn');
+            const statusText = document.getElementById('audio-status-text');
+            if (isAudioOn) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> 關閉火車音效';
+                btn.className = "bg-emerald-600 text-white px-3 py-1 rounded-full shadow hover:bg-emerald-700 transition font-black";
+                statusText.innerText = "聲音開啟";
+                playTrainWhistle();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-1"></i> 開啟火車音效';
+                btn.className = "bg-white text-sky-700 px-3 py-1 rounded-full shadow hover:bg-sky-50 transition font-black";
+                statusText.innerText = "聲音關閉";
+            }
+        }
+
+        function playTrainWhistle() {
+            if (!isAudioOn) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, now); // D5
+                osc.frequency.setValueAtTime(880, now + 0.2); // A5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+                osc.start(now);
+                osc.stop(now + 0.7);
+            } catch(e) {}
+        }
+
+        function playSound(type) {
+            if (!isAudioOn) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.15);
+                    osc.frequency.setValueAtTime(783.99, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(150, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch(e) {}
+        }
+
+        // --- Questions Database (Simplified 3-choice sequence) ---
+        const questions = [
+            {
+                id: 'q1',
+                seq: ["星期一", "星期二"],
+                correct: "星期三",
+                options: ["星期三", "星期四", "星期五"],
+                hint: "順序：星期一 ➔ 星期二 ➔ 星期三"
+            },
+            {
+                id: 'q2',
+                seq: ["星期二", "星期三"],
+                correct: "星期四",
+                options: ["星期一", "星期四", "星期六"],
+                hint: "順序：星期二 ➔ 星期三 ➔ 星期四"
+            },
+            {
+                id: 'q3',
+                seq: ["星期三", "星期四"],
+                correct: "星期五",
+                options: ["星期二", "星期五", "星期日"],
+                hint: "順序：星期三 ➔ 星期四 ➔ 星期五"
+            },
+            {
+                id: 'q4',
+                seq: ["星期四", "星期五"],
+                correct: "星期六",
+                options: ["星期六", "星期一", "星期三"],
+                hint: "順序：星期四 ➔ 星期五 ➔ 星期六"
+            },
+            {
+                id: 'q5',
+                seq: ["星期六", "星期日"],
+                correct: "星期一",
+                options: ["星期二", "星期一", "星期四"],
+                hint: "循環概念：星期日過後，又回到 星期一"
+            }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+        let currentErrors = 0;
+        let errorBank = [];
+        let isReviewMode = false;
+        let activeQueue = [...questions];
+
+        function goHome() {
+            playSound('correct');
+            document.getElementById('screen-home').classList.remove('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-error-bank').classList.add('hidden');
+            document.getElementById('modal-overlay').classList.add('hidden');
+            updateErrorBadge();
+        }
+
+        function updateErrorBadge() {
+            document.getElementById('error-count-badge').innerText = `${errorBank.length} 題錯題記錄`;
+        }
+
+        function startGame() {
+            playTrainWhistle();
+            isReviewMode = false;
+            activeQueue = [...questions];
+            currentIndex = 0;
+            score = 0;
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= activeQueue.length) {
+                showVictoryModal();
+                return;
+            }
+            const q = activeQueue[currentIndex];
+            currentErrors = 0;
+            document.getElementById('game-progress').innerText = `題目 ${currentIndex + 1} / ${activeQueue.length}`;
+            document.getElementById('error-count-display').innerText = `0 / 3`;
+            document.getElementById('seq-item-1').innerText = q.seq[0];
+            document.getElementById('seq-item-2').innerText = q.seq[1];
+            document.getElementById('seq-target').innerText = "[ ❓ 畫框 ]";
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('hint-text').innerText = q.hint;
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+
+            // Shuffle 3 options
+            const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+            shuffled.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white hover:bg-sky-50 border-4 border-sky-300 hover:border-sky-500 p-6 rounded-3xl shadow-xl flex items-center justify-center transform transition hover:scale-105 text-2xl md:text-3xl font-black text-slate-800";
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt, q);
+                grid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selected, q) {
+            if (selected === q.correct) {
+                playSound('correct');
+                score += 20;
+                document.getElementById('score-val').innerText = score;
+                document.getElementById('seq-target').innerText = q.correct;
+                showModal(true, "答對了！太棒了！", "Thomas 小火車向前開行！", () => {
+                    currentIndex++;
+                    loadQuestion();
+                });
+            } else {
+                playSound('wrong');
+                currentErrors++;
+                document.getElementById('error-count-display').innerText = `${currentErrors} / 3`;
+                if (currentErrors >= 3) {
+                    document.getElementById('hint-box').classList.remove('hidden');
+                }
+                addToErrorBank(q);
+                showModal(false, "再想一想喔！", "答錯了沒關係，試試另一個答案！", null);
+            }
+        }
+
+        function addToErrorBank(q) {
+            if (!errorBank.some(item => item.id === q.id)) {
+                errorBank.push(q);
+            }
+            updateErrorBadge();
+        }
+
+        function openErrorBank() {
+            playSound('correct');
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-error-bank').classList.remove('hidden');
+            const container = document.getElementById('error-list-container');
+            container.innerHTML = '';
+
+            if (errorBank.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 font-bold text-xl"><i class="fa-solid fa-face-smile text-4xl mb-2 text-amber-400"></i><br>目前沒有錯題記錄！</div>`;
+                return;
+            }
+
+            errorBank.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = "bg-amber-50 border-3 border-amber-300 p-5 rounded-2xl flex items-center justify-between shadow-sm";
+                div.innerHTML = `
+                    <div>
+                        <h4 class="text-lg font-black text-slate-800">${q.seq[0]} ➔ ${q.seq[1]} ➔ ❓ (答案: ${q.correct})</h4>
+                        <p class="text-sm font-bold text-amber-700 mt-1">💡 ${q.hint}</p>
+                    </div>
+                    <button onclick="retryErrorItem(${idx})" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl shadow">重新溫習</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function retryErrorItem(idx) {
+            playSound('correct');
+            const q = errorBank[idx];
+            activeQueue = [q];
+            currentIndex = 0;
+            isReviewMode = true;
+            document.getElementById('screen-error-bank').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        let modalCallback = null;
+
+        function showModal(isSuccess, title, text, callback) {
+            const modal = document.getElementById('modal-overlay');
+            const icon = document.getElementById('modal-icon');
+            const titleEl = document.getElementById('modal-title');
+            const textEl = document.getElementById('modal-text');
+            const btn = document.getElementById('modal-btn');
+
+            modal.classList.remove('hidden');
+            if (isSuccess) {
+                icon.innerText = "🌟";
+                titleEl.innerText = title;
+                titleEl.className = "text-3xl font-black text-emerald-600 mb-2";
+                textEl.innerText = text;
+                btn.innerText = "下一題 ➜";
+                btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xl py-4 rounded-2xl shadow-xl transition";
+                modalCallback = callback;
+            } else {
+                icon.innerText = "💪";
+                titleEl.innerText = title;
+                titleEl.className = "text-3xl font-black text-amber-600 mb-2";
+                textEl.innerText = text;
+                btn.innerText = "重新再試";
+                btn.className = "w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-xl py-4 rounded-2xl shadow-xl transition";
+                modalCallback = () => {
+                    modal.classList.add('hidden');
+                };
+            }
+        }
+
+        function nextQuestion() {
+            playSound('correct');
+            document.getElementById('modal-overlay').classList.add('hidden');
+            if (modalCallback) {
+                modalCallback();
+                modalCallback = null;
+            }
+        }
+
+        function showVictoryModal() {
+            playTrainWhistle();
+            const modal = document.getElementById('modal-overlay');
+            const icon = document.getElementById('modal-icon');
+            const titleEl = document.getElementById('modal-title');
+            const textEl = document.getElementById('modal-text');
+            const btn = document.getElementById('modal-btn');
+
+            modal.classList.remove('hidden');
+            icon.innerText = "🏆";
+            titleEl.innerText = "恭喜完成火車冒險！";
+            titleEl.className = "text-3xl font-black text-amber-600 mb-2";
+            textEl.innerText = `你獲得了 ${score} 積分！成為星期順序小達人！`;
+            btn.innerText = "返回主頁";
+            btn.className = "w-full bg-sky-500 hover:bg-sky-600 text-white font-black text-xl py-4 rounded-2xl shadow-xl transition";
+            modalCallback = () => {
+                goHome();
+            };
+        }
+    </script>
+</body>
+</html>
